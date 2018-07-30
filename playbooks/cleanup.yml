@@ -33,12 +33,64 @@
       ignore_errors: True
 
 # # VPC
+    - name: Grab route table ID
+      ec2_vpc_route_table_facts:
+        filters:
+          "tag:Name": "{{ placeholder }}"
+          "tag:Type": "vyos"
+        region: "{{ ec2_region }}"
+      register: vpc_route_tables
+
+    - name: Grab subnet ID
+      ec2_vpc_subnet_facts:
+        filters:
+          "tag:Name": "{{ placeholder }}"
+          "tag:Type": "vyos"
+        region: "{{ ec2_region }}"
+      register: vpc_subnets
+
+    - name: Grab IGW ID
+      ec2_vpc_igw_facts:
+        filters:
+          "tag:Name": "{{ placeholder }}"
+          "tag:Type": "vyos"
+        region: "{{ ec2_region }}"
+      register: vpc_igws
+
+    - name: Delete IGW
+      ec2_vpc_igw:
+        region: "{{ ec2_region }}"
+        vpc_id: "{{ item.attachments.0.vpc_id }}"
+        state: absent
+      wait: yes
+      with_items: "{{ vpc_igws.internet_gateways }}"
+
+    - name: Delete route table
+      ec2_vpc_route_table:
+        state: absent
+        vpc_id: "{{ item.vpc_id }}"
+        route_table_id: "{{ item.id }}"
+        lookup: id
+      wait: yes
+      with_items: "{{ vpc_route_tables.route_tables }}"
+
+    - name: Delete subnet
+      ec2_vpc_subnet:
+        state: absent
+        vpc_id: "{{ item.vpc_id }}"
+        cidr: "{{ item.cidr_block }}"
+      wait: yes
+      with_items: "{{ vpc_subnets.subnets }}"
+
     - name: Delete VPC
-      ec2_vpc:
+      ec2_vpc_net:
+        name: "{{ placeholder }}"
         state: absent
         cidr_block: 10.0.0.0/16
+        purge_cidrs: yes
         resource_tags:
           Type: vyos
           Name: "{{ placeholder }}"
         region: "{{ ec2_region }}"
       ignore_errors: True
+      wait: yes

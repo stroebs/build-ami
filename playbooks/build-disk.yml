@@ -25,6 +25,15 @@
   tasks:
     # ---- Set up the specified ISO release ----
 
+    - name: Update apt
+      command: apt update
+
+    - name: Install python-pip
+      command: apt install -y python-pip
+
+    - name: Install Python pre-requisites
+      command: pip install urllib3 pyOpenSSL ndg-httpsclient pyasn1
+
     - name: Fetch VyOS ISO GPG signature
       uri:
         url: "{{ vyos_iso_url }}.asc"
